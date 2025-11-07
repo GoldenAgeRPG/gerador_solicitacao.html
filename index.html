@@ -27,6 +27,7 @@
       color: var(--text);
       line-height: 1.6;
       padding: 20px;
+      margin: 0;
     }
     .container {
       max-width: 900px;
@@ -211,6 +212,15 @@
         return str.replace(/"/g, "&quot;"); 
       }
 
+      // --- FUNÇÃO DE COMUNICAÇÃO COM O IFRAME ---
+      function sendHeightToParent() {
+        const newHeight = document.documentElement.scrollHeight;
+        // Envia a altura para o script do fórum
+        window.parent.postMessage({ 
+          frameHeight: newHeight 
+        }, 'https://goldenagerpg.github.io');
+      }
+
       function generateAndDisplayCode() {
         try {
           const jogador = escapeHTML(getVal('f-jogador'));
@@ -256,16 +266,10 @@
         generateAndDisplayCode();
       }
 
-      // --- SCRIPT DE ALTURA DO IFRAME ---
-      function sendHeight() {
-        const newHeight = document.documentElement.scrollHeight;
-        window.parent.postMessage({ frameHeight: newHeight }, '*');
-      }
-
+      // --- OBSERVADOR DE REDIMENSIONAMENTO ---
       const resizeObserver = new ResizeObserver(entries => {
-        sendHeight();
+        sendHeightToParent();
       });
-      resizeObserver.observe(document.body);
       
       // --- EVENT LISTENERS ---
       loadDataFromLocalStorage();
@@ -273,7 +277,7 @@
       form.addEventListener('input', function(event) {
         generateAndDisplayCode();
         saveDataToLocalStorage();
-        sendHeight(); 
+        sendHeightToParent();
       });
 
       copyBtn.addEventListener('click', function() {
@@ -285,7 +289,9 @@
         }, 2000);
       });
       
-      sendHeight();
+      // Inicialização
+      resizeObserver.observe(document.body);
+      sendHeightToParent(); // Envia altura inicial
 
     });
   </script>
