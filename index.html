@@ -32,6 +32,7 @@
       color: var(--text);
       line-height: 1.6;
       padding: 20px;
+      /* Garantir que o body ocupe pelo menos a tela toda */
       min-height: 100vh;
     }
     .container {
@@ -261,12 +262,13 @@
         return str.replace(/"/g, "&quot;"); 
       }
 
-      // --- SISTEMA DE COMUNICAÇÃO COM O PAI ---
-      function sendHeightToParent() {
-        // Método mais confiável para calcular altura
+      // --- SISTEMA DE ALTURA DINÂMICA ---
+      function calculateAndSendHeight() {
+        // Método mais confiável para obter a altura total do documento
         const body = document.body;
         const html = document.documentElement;
         
+        // Calcular a altura máxima entre várias propriedades
         const height = Math.max(
           body.scrollHeight, 
           body.offsetHeight,
@@ -275,17 +277,18 @@
           html.offsetHeight
         );
         
-        console.log('Altura calculada:', height + 'px');
+        console.log('Altura calculada do iframe:', height + 'px');
         
+        // Enviar altura EXATA para o pai
         window.parent.postMessage({ 
           frameHeight: height 
         }, 'https://goldenagerpg.github.io');
       }
 
-      // Escutar mensagens do pai
+      // Escutar solicitações de altura do pai
       window.addEventListener('message', function(event) {
         if (event.data === 'getHeight') {
-          sendHeightToParent();
+          calculateAndSendHeight();
         }
       });
 
@@ -339,14 +342,14 @@
         generateAndDisplayCode();
       }
 
-      // --- OBSERVADORES DE REDIMENSIONAMENTO ---
+      // --- OBSERVADOR DE MUDANÇAS ---
       const resizeObserver = new ResizeObserver(function() {
-        sendHeightToParent();
+        calculateAndSendHeight();
       });
 
-      // Observar mudanças no DOM
+      // Observar mudanças no DOM que possam alterar a altura
       const mutationObserver = new MutationObserver(function() {
-        setTimeout(sendHeightToParent, 100);
+        setTimeout(calculateAndSendHeight, 10);
       });
 
       // --- INICIALIZAÇÃO ---
@@ -354,7 +357,7 @@
         // Carrega dados salvos
         loadDataFromLocalStorage();
         
-        // Configura observadores
+        // Configurar observadores
         resizeObserver.observe(document.body);
         mutationObserver.observe(document.body, {
           childList: true,
@@ -363,16 +366,15 @@
           attributeFilter: ['style', 'class']
         });
         
-        // Envia altura inicial com múltiplas tentativas
-        setTimeout(sendHeightToParent, 500);
-        setTimeout(sendHeightToParent, 1000);
-        setTimeout(sendHeightToParent, 1000);
+        // Enviar altura inicial após um breve delay
+        setTimeout(calculateAndSendHeight, 100);
         
-        // Configura eventos
+        // Configurar eventos
         form.addEventListener('input', function() {
           generateAndDisplayCode();
           saveDataToLocalStorage();
-          setTimeout(sendHeightToParent, 200);
+          // Enviar nova altura após mudanças
+          setTimeout(calculateAndSendHeight, 50);
         });
 
         copyBtn.addEventListener('click', function() {
@@ -385,17 +387,16 @@
           }, 2000);
         });
         
-        // Envia altura quando a janela é redimensionada
+        // Recalcular altura em redimensionamentos
         window.addEventListener('resize', function() {
-          setTimeout(sendHeightToParent, 300);
+          setTimeout(calculateAndSendHeight, 100);
         });
       }
 
-      // Inicializa a aplicação
+      // Inicializar
       initialize();
 
     });
   </script>
 </body>
 </html>
-
