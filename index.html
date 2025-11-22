@@ -68,6 +68,7 @@
       display: grid; 
       grid-template-columns: 1fr 1fr; 
       gap: 15px; 
+      margin-bottom: 15px; /* Espaçamento extra entre linhas */
     }
     .grid-3 { 
       display: grid; 
@@ -166,6 +167,7 @@
     <div id="form-container">
       <fieldset>
         <legend>Informações do Pedido</legend>
+        
         <div class="grid-2">
           <div class="input-group">
             <label for="f-jogador">Jogador</label>
@@ -177,7 +179,7 @@
           </div>
         </div>
         
-        <div class="grid-3">
+        <div class="grid-2">
           <div class="input-group">
             <label for="f-tipo">Tipo de Atividade</label>
             <select id="f-tipo">
@@ -187,6 +189,16 @@
               <option value="Treino">Treino</option>
             </select>
           </div>
+          <div class="input-group">
+            <label for="f-narracao">Modo de Narração</label>
+            <select id="f-narracao">
+              <option value="Narrado">Narrado (Com Mestre)</option>
+              <option value="Autonarrado">Autonarrado (Sem Mestre)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="grid-2">
           <div class="input-group">
             <label for="f-grau">Grau/Nível da Atividade</label>
             <select id="f-grau">
@@ -251,7 +263,7 @@
       const copyBtn = document.getElementById('copy-btn');
       const outputArea = document.getElementById('output-code');
       const allInputs = form.querySelectorAll('input, textarea, select');
-      const storageKey = 'pedidoAvaliacaoData_v3';
+      const storageKey = 'pedidoAvaliacaoData_v4'; // Atualizei a chave do cache
 
       // --- FUNÇÕES UTILITÁRIAS ---
       function getVal(id) { 
@@ -278,26 +290,20 @@
         
         const linksFormatados = linhas.map(linha => {
           const url = linha.trim();
-          // Extrair nome do personagem da URL ou usar texto padrão
           let nome = 'Ficha';
           try {
-            // Tentar extrair informação útil da URL
             const urlObj = new URL(url);
             const caminho = urlObj.pathname;
-            // Se houver algo no caminho que pareça um nome, usar isso
             const partes = caminho.split('/').filter(part => part && part.length > 2);
             if (partes.length > 0) {
               nome = partes[partes.length - 1].replace(/-/g, ' ').replace(/%20/g, ' ');
             }
           } catch (e) {
-            // Se não for uma URL válida, usar o texto cru
             nome = 'Ficha do Participante';
           }
-          
           return `[url=${url}]${nome}[/url]`;
         });
         
-        // Juntar todos os links na mesma linha, separados por vírgulas
         return linksFormatados.join(', ');
       }
 
@@ -306,7 +312,7 @@
       
       function sendHeight() {
         const newHeight = document.documentElement.scrollHeight;
-        console.log('Enviando altura para o fórum:', newHeight + 'px');
+        // console.log('Enviando altura para o fórum:', newHeight + 'px');
         window.parent.postMessage({ frameHeight: newHeight }, targetOrigin);
       }
 
@@ -321,6 +327,7 @@
           const jogador = escapeHTML(getVal('f-jogador'));
           const personagem = escapeHTML(getVal('f-personagem'));
           const tipo = escapeHTML(getVal('f-tipo'));
+          const narracao = escapeHTML(getVal('f-narracao')); // Novo valor capturado
           const grau = escapeHTML(getVal('f-grau'));
           const statusInimigos = escapeHTML(getVal('f-status-inimigos'));
           const participantes = escapeHTML(getVal('f-participantes'));
@@ -330,8 +337,8 @@
           const fichasTexto = getVal('f-fichas');
           const fichasFormatadas = processarLinksFichas(fichasTexto);
 
-          // Template atualizado com todas as correções
-          const codigoTemplate = `<link href="https://gaaaaaaaaabs.github.io/goldenagerepositor.io/combate.css" rel="stylesheet" type="text/css"> <div class="avaliacao-request"> <div class="avaliacao-header"> <div class="avaliacao-title"> <h3>PEDIDO DE AVALIAÇÃO</h3> <span class="avaliacao-status" data-status="1">Status: Aguardando Avaliação</span> </div> </div> <div class="avaliacao-content"> <div class="avaliacao-field"> <span class="avaliacao-label">Jogador:</span> <span class="avaliacao-value">${jogador || 'SeuNomeAqui'}</span> </div> <div class="avaliacao-field"> <span class="avaliacao-label">Personagem:</span> <span class="avaliacao-value">${personagem || 'NomeDoPersonagem'}</span> </div> <div class="avaliacao-field"> <span class="avaliacao-label">Tipo de Atividade:</span> <span class="avaliacao-value">${tipo || 'Tipo de Atividade'}</span> </div> <div class="avaliacao-field"> <span class="avaliacao-label">Grau/Nível:</span> <span class="avaliacao-value">${grau || 'Grau da Atividade'}</span> </div> <div class="avaliacao-field"> <span class="avaliacao-label">Barra de Status Inimigos:</span> <span class="avaliacao-value">${statusInimigos || 'Não informado'}</span> </div> <div class="avaliacao-field"> <span class="avaliacao-label">Participantes:</span> <span class="avaliacao-value">${participantes || 'Lista de participantes'}</span> </div> <div class="avaliacao-field full-width"> <span class="avaliacao-label">Objetivo da Atividade:</span> <span class="avaliacao-value">${objetivo || 'Objetivo da atividade...'}</span> </div> <div class="avaliacao-field full-width"> <span class="avaliacao-label">Resumo das Atividades Anteriores:</span> <span class="avaliacao-value">${resumo || 'Resumo das atividades anteriores...'}</span> </div> <div class="avaliacao-field full-width"> <span class="avaliacao-label">Sugestão de Roteiro:</span> <span class="avaliacao-value">${roteiro || 'Sugestão de roteiro não fornecida'}</span> </div> <div class="avaliacao-field"> <span class="avaliacao-label">Fichas dos Participantes:</span> <span class="avaliacao-value">${fichasFormatadas}</span> </div> </div> <div class="avaliacao-footer"> <div class="avaliacao-master"> <b>Avaliador Responsável:</b> <span style="color: #82b1ff;">Aguardando designação</span> </div> <div class="avaliacao-notes"> <b>Feedback do Avaliador:</b> <span style="color: #82b1ff;">Aguardando avaliação.</span> </div> </div> </div> <style> .avaliacao-request { background: linear-gradient(135deg, #1a1a2e 0%, #0c0c1a 100%); border: 2px solid #2979ff; border-radius: 10px; margin: 15px 0; overflow: hidden; color: #e7e9ff; font-family: Arial, sans-serif; } .avaliacao-header { background: rgba(41, 121, 255, 0.2); padding: 15px 20px; border-bottom: 1px solid #333; } .avaliacao-title { display: flex; justify-content: space-between; align-items: center; } .avaliacao-title h3 { margin: 0; color: #82b1ff; font-size: 1.3em; } .avaliacao-status { background: #2979ff; color: white; padding: 5px 10px; border-radius: 4px; font-size: 0.9em; font-weight: bold; } .avaliacao-content { padding: 20px; } .avaliacao-field { display: flex; margin-bottom: 12px; align-items: flex-start; } .avaliacao-field.full-width { flex-direction: column; } .avaliacao-label { font-weight: bold; width: 140px; flex-shrink: 0; color: #bfc6e6; } .avaliacao-value { color: #82b1ff; flex: 1; } .avaliacao-field.full-width .avaliacao-value { margin-top: 5px; background: rgba(0, 0, 0, 0.2); padding: 10px; border-radius: 4px; border-left: 3px solid #2979ff; } .avaliacao-footer { background: rgba(0, 0, 0, 0.3); padding: 12px 20px; border-top: 1px solid #333; text-align: center; } .avaliacao-master { color: #bfc6e6; font-size: 0.95em; margin-bottom: 8px; } .avaliacao-notes { color: #bfc6e6; font-size: 0.95em; } </style>`;
+          // Template atualizado com a nova linha de Narração
+          const codigoTemplate = `<link href="https://gaaaaaaaaabs.github.io/goldenagerepositor.io/combate.css" rel="stylesheet" type="text/css"> <div class="avaliacao-request"> <div class="avaliacao-header"> <div class="avaliacao-title"> <h3>PEDIDO DE AVALIAÇÃO</h3> <span class="avaliacao-status" data-status="1">Status: Aguardando Avaliação</span> </div> </div> <div class="avaliacao-content"> <div class="avaliacao-field"> <span class="avaliacao-label">Jogador:</span> <span class="avaliacao-value">${jogador || 'SeuNomeAqui'}</span> </div> <div class="avaliacao-field"> <span class="avaliacao-label">Personagem:</span> <span class="avaliacao-value">${personagem || 'NomeDoPersonagem'}</span> </div> <div class="avaliacao-field"> <span class="avaliacao-label">Tipo de Atividade:</span> <span class="avaliacao-value">${tipo || 'Tipo de Atividade'}</span> </div> <div class="avaliacao-field"> <span class="avaliacao-label">Modo de Narração:</span> <span class="avaliacao-value">${narracao}</span> </div> <div class="avaliacao-field"> <span class="avaliacao-label">Grau/Nível:</span> <span class="avaliacao-value">${grau || 'Grau da Atividade'}</span> </div> <div class="avaliacao-field"> <span class="avaliacao-label">Barra de Status Inimigos:</span> <span class="avaliacao-value">${statusInimigos || 'Não informado'}</span> </div> <div class="avaliacao-field"> <span class="avaliacao-label">Participantes:</span> <span class="avaliacao-value">${participantes || 'Lista de participantes'}</span> </div> <div class="avaliacao-field full-width"> <span class="avaliacao-label">Objetivo da Atividade:</span> <span class="avaliacao-value">${objetivo || 'Objetivo da atividade...'}</span> </div> <div class="avaliacao-field full-width"> <span class="avaliacao-label">Resumo das Atividades Anteriores:</span> <span class="avaliacao-value">${resumo || 'Resumo das atividades anteriores...'}</span> </div> <div class="avaliacao-field full-width"> <span class="avaliacao-label">Sugestão de Roteiro:</span> <span class="avaliacao-value">${roteiro || 'Sugestão de roteiro não fornecida'}</span> </div> <div class="avaliacao-field"> <span class="avaliacao-label">Fichas dos Participantes:</span> <span class="avaliacao-value">${fichasFormatadas}</span> </div> </div> <div class="avaliacao-footer"> <div class="avaliacao-master"> <b>Avaliador Responsável:</b> <span style="color: #82b1ff;">Aguardando designação</span> </div> <div class="avaliacao-notes"> <b>Feedback do Avaliador:</b> <span style="color: #82b1ff;">Aguardando avaliação.</span> </div> </div> </div> <style> .avaliacao-request { background: linear-gradient(135deg, #1a1a2e 0%, #0c0c1a 100%); border: 2px solid #2979ff; border-radius: 10px; margin: 15px 0; overflow: hidden; color: #e7e9ff; font-family: Arial, sans-serif; } .avaliacao-header { background: rgba(41, 121, 255, 0.2); padding: 15px 20px; border-bottom: 1px solid #333; } .avaliacao-title { display: flex; justify-content: space-between; align-items: center; } .avaliacao-title h3 { margin: 0; color: #82b1ff; font-size: 1.3em; } .avaliacao-status { background: #2979ff; color: white; padding: 5px 10px; border-radius: 4px; font-size: 0.9em; font-weight: bold; } .avaliacao-content { padding: 20px; } .avaliacao-field { display: flex; margin-bottom: 12px; align-items: flex-start; } .avaliacao-field.full-width { flex-direction: column; } .avaliacao-label { font-weight: bold; width: 140px; flex-shrink: 0; color: #bfc6e6; } .avaliacao-value { color: #82b1ff; flex: 1; } .avaliacao-field.full-width .avaliacao-value { margin-top: 5px; background: rgba(0, 0, 0, 0.2); padding: 10px; border-radius: 4px; border-left: 3px solid #2979ff; } .avaliacao-footer { background: rgba(0, 0, 0, 0.3); padding: 12px 20px; border-top: 1px solid #333; text-align: center; } .avaliacao-master { color: #bfc6e6; font-size: 0.95em; margin-bottom: 8px; } .avaliacao-notes { color: #bfc6e6; font-size: 0.95em; } </style>`;
 
           outputArea.value = codigoTemplate;
         
